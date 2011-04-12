@@ -178,6 +178,7 @@ module Twitter
       @headers = []
       @state   = :init
       @buffer  = BufferedTokenizer.new("\r", MAX_LINE_LENGTH)
+      @stream  = ''
     end
 
     def send_request
@@ -240,8 +241,12 @@ module Twitter
     def parse_stream_line ln
       ln.strip!
       unless ln.empty?
-        if ln[0,1] == '{'
-          @each_item_callback.call(ln) if @each_item_callback
+        if ln[0,1] == '{' || ln[ln.length-1,1] == '}'
+          @stream << ln
+          if @stream[0,1] == '{' && @stream[@stream.length-1,1] == '}'
+            @each_item_callback.call(@stream) if @each_item_callback
+            @stream = ''
+          end
         end
       end
     end
